@@ -1,6 +1,25 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { createCustomerPortalSession } from '@/lib/stripe'
+import Stripe from 'stripe'
+
+function getStripeClient() {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('STRIPE_SECRET_KEY is not set')
+  }
+  return new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2025-02-24.acacia',
+  })
+}
+
+async function createCustomerPortalSession(customerId: string) {
+  const stripe = getStripeClient()
+  const session = await stripe.billingPortal.sessions.create({
+    customer: customerId,
+    return_url: `${process.env.NEXT_PUBLIC_URL}/dashboard/billing`,
+  })
+
+  return session
+}
 
 export async function POST(request: Request) {
   try {

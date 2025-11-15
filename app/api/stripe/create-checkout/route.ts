@@ -1,6 +1,59 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { createCheckoutSession, createOrGetCustomer } from '@/lib/stripe'
+import Stripe from 'stripe'
+
+function getStripeClient() {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('STRIPE_SECRET_KEY is not set')
+  }
+  return new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2025-02-24.acacia',
+  })
+}
+
+async function createOrGetCustomer(email: string, userId: string) {
+  const stripe = getStripeClient()
+  const existingCustomers = await stripe.customers.list({
+    email,
+    limit: 1,
+  })
+
+  if (existingCustomers.data.length > 0) {
+    return existingCustomers.data[0]
+  }
+
+  const customer = await stripe.customers.create({
+    email,
+    metadata: { userId },
+  })
+
+  return customer
+}
+
+async function createCheckoutSession(
+  customerId: string,
+  priceId: string,
+  userId: string
+) {
+  const stripe = getStripeClient()
+  const session = await stripe.checkout.sessions.create({
+    customer: customerId,
+    line_items: [
+      {
+        price: priceId,
+        quantity: 1,
+      },
+    ],
+    mode: 'subscription',
+    success_url: `${process.env.NEXT_PUBLIC_URL}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${process.env.NEXT_PUBLIC_URL}/pricing`,
+    metadata: {
+      userId,
+    },
+  })
+
+  return session
+}
 
 export async function POST(request: Request) {
   try {
