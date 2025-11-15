@@ -179,7 +179,35 @@ function fallbackAnalysis(
       issue: 'Too many capital letters in subject',
       recommendation: 'Use normal capitalization',
     })
-    spamScore += 10
+    spamScore += 20  // Increased from 10 to 20
+  }
+  
+  // Check for excessive exclamation marks
+  const exclamationCount = (subject.match(/!/g) || []).length + (body.match(/!/g) || []).length
+  if (exclamationCount >= 3) {
+    issues.push({
+      type: 'warning',
+      category: 'formatting',
+      issue: `Excessive exclamation marks (${exclamationCount} found)`,
+      explanation: 'Multiple exclamation marks are a common spam indicator',
+      recommendation: 'Use at most one exclamation mark',
+      impact: 'medium',
+    })
+    spamScore += 15
+  }
+  
+  // Check for all caps words in body
+  const allCapsWords = body.match(/\b[A-Z]{3,}\b/g) || []
+  if (allCapsWords.length > 2) {
+    issues.push({
+      type: 'warning',
+      category: 'formatting',
+      issue: `Multiple all-caps words (${allCapsWords.length} found)`,
+      explanation: 'Excessive capitalization is unprofessional and spam-like',
+      recommendation: 'Use normal sentence case',
+      impact: 'medium',
+    })
+    spamScore += 12
   }
 
   // Check for spam words
@@ -193,12 +221,12 @@ function fallbackAnalysis(
     issues.push({
       type: 'critical',
       category: 'content',
-      issue: `Contains spam trigger words: ${spamWords.slice(0, 3).join(', ')}`,
+      issue: `Contains spam trigger words: ${spamWords.slice(0, 3).join(', ')}${spamWords.length > 3 ? ` and ${spamWords.length - 3} more` : ''}`,
       explanation: 'These words are commonly associated with spam emails',
       recommendation: 'Replace or remove these phrases with more natural language',
       impact: 'high',
     })
-    spamScore += spamWords.length * 8
+    spamScore += spamWords.length * 15  // Increased from 8 to 15
   }
 
   const technical = analyzeTechnical(subject, body)
@@ -211,14 +239,14 @@ function fallbackAnalysis(
     })
   } else {
     issues.push({
-      type: 'warning',
+      type: 'critical',
       category: 'technical',
       issue: 'No unsubscribe link found',
       explanation: 'Required by CAN-SPAM Act for marketing emails',
       recommendation: 'Add a clear unsubscribe link',
       impact: 'high',
     })
-    spamScore += 15
+    spamScore += 25  // Increased from 15 to 25
   }
 
   if (technical.linkCount > 5) {
@@ -230,7 +258,22 @@ function fallbackAnalysis(
       recommendation: 'Reduce to 2-3 essential links',
       impact: 'medium',
     })
-    spamScore += 10
+    spamScore += 18  // Increased from 10 to 18
+  }
+  
+  // Check for phone numbers (common in spam)
+  const phonePattern = /\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/g
+  const phones = body.match(phonePattern) || []
+  if (phones.length > 0) {
+    issues.push({
+      type: 'warning',
+      category: 'content',
+      issue: 'Contains phone number',
+      explanation: 'Phone numbers in emails can be a spam indicator',
+      recommendation: 'Consider removing or using a contact form instead',
+      impact: 'low',
+    })
+    spamScore += 8
   }
 
   // Cap spam score at 100
