@@ -14,30 +14,30 @@ export const stripe = getStripeClient()
 
 export const PLAN_LIMITS = {
   free: {
-    checksPerMonth: 5,
+    checksPerMonth: 3,
     apiRequestsPerMonth: 0,
     teamMembers: 1,
-    savedTemplates: 5,
+    savedTemplates: 3,
     historyDays: 7,
   },
-  pro: {
-    checksPerMonth: 999999,
-    apiRequestsPerMonth: 1000,
+  starter: {
+    checksPerMonth: 999999, // unlimited
+    apiRequestsPerMonth: 0, // no API access
     teamMembers: 1,
     savedTemplates: 25,
     historyDays: 999999,
   },
-  team: {
+  pro: {
     checksPerMonth: 999999,
     apiRequestsPerMonth: 10000,
-    teamMembers: 10,
-    savedTemplates: 999999,
+    teamMembers: 1,
+    savedTemplates: 50,
     historyDays: 999999,
   },
   enterprise: {
     checksPerMonth: 999999,
-    apiRequestsPerMonth: 999999,
-    teamMembers: 999999,
+    apiRequestsPerMonth: 50000,
+    teamMembers: 10,
     savedTemplates: 999999,
     historyDays: 999999,
   },
