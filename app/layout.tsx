@@ -33,21 +33,12 @@ export const metadata: Metadata = {
     title: "SPAMRUN - Beat the Spam Filter. Reach the Inbox.",
     description: "AI-powered email analysis that tells you exactly why your emails land in spam—and how to fix it.",
     siteName: "SPAMRUN",
-    images: [
-      {
-        url: '/og-image.png', // You'll need to create this
-        width: 1200,
-        height: 630,
-        alt: 'SPAMRUN - Email Deliverability Analysis',
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "SPAMRUN - Beat the Spam Filter",
     description: "AI-powered email analysis for better deliverability",
     creator: "@spamrun",
-    images: ['/og-image.png'],
   },
   verification: {
     google: 'your-google-verification-code', // Add when you set up Search Console
