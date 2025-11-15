@@ -1,7 +1,6 @@
 import { Hero } from '@/components/marketing/Hero'
 import { Features } from '@/components/marketing/Features'
 import { Pricing } from '@/components/marketing/Pricing'
-import { Testimonials } from '@/components/marketing/Testimonials'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { ArrowRight } from 'lucide-react'
@@ -11,7 +10,6 @@ export default function HomePage() {
     <>
       <Hero />
       <Features />
-      <Testimonials />
       <Pricing />
       
       {/* CTA Section */}
