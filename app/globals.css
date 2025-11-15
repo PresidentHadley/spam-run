@@ -58,3 +58,66 @@
   }
 }
 
+/* Blog Post Styling - Beautiful, readable, professional */
+@layer components {
+  .prose {
+    @apply text-foreground;
+  }
+  
+  .prose p {
+    @apply mb-6 leading-[1.8] text-[17px];
+  }
+  
+  .prose .lead {
+    @apply text-xl leading-[1.7] mb-10 text-muted-foreground font-normal border-l-4 border-primary pl-6 py-2;
+  }
+  
+  .prose h2 {
+    @apply text-3xl font-bold mt-16 mb-6 text-foreground first:mt-0;
+  }
+  
+  .prose h3 {
+    @apply text-2xl font-bold mt-12 mb-4 text-foreground;
+  }
+  
+  .prose ul {
+    @apply my-6 space-y-3 pl-6;
+  }
+  
+  .prose li {
+    @apply leading-[1.8] relative pl-2;
+  }
+  
+  .prose strong {
+    @apply font-semibold text-foreground;
+  }
+  
+  .prose a {
+    @apply text-primary hover:underline font-medium;
+  }
+  
+  .prose table {
+    @apply w-full my-10 border-collapse rounded-lg overflow-hidden border border-border;
+  }
+  
+  .prose thead {
+    @apply bg-muted;
+  }
+  
+  .prose th {
+    @apply text-left py-4 px-6 font-semibold text-foreground;
+  }
+  
+  .prose td {
+    @apply py-4 px-6 border-t border-border;
+  }
+  
+  .prose code {
+    @apply bg-muted px-2 py-1 rounded text-sm font-mono;
+  }
+  
+  .prose blockquote {
+    @apply border-l-4 border-primary pl-6 my-8 italic text-muted-foreground bg-muted/30 py-4 rounded-r;
+  }
+}
+
