@@ -33,7 +33,7 @@ export function Hero() {
           </Link>
         </div>
         <p className="text-sm text-muted-foreground">
-          No credit card required. 5 free checks per month.
+          No credit card required. 3 free checks per month.
         </p>
       </div>
 
