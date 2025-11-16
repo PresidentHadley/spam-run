@@ -188,44 +188,18 @@ export default function EmailCheckerPage() {
                   <CardTitle>Analysis Results</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <Tabs defaultValue="issues">
-                    <TabsList className="grid w-full grid-cols-3">
-                      <TabsTrigger value="issues">Issues</TabsTrigger>
-                      <TabsTrigger value="recommendations">Fixes</TabsTrigger>
+                  <Tabs defaultValue="recommendations">
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="recommendations">Issues & Fixes</TabsTrigger>
                       <TabsTrigger value="positives">Positives</TabsTrigger>
                     </TabsList>
-
-                    <TabsContent value="issues" className="space-y-4 mt-4">
-                      {result.analysis.spamIndicators?.length > 0 ? (
-                        result.analysis.spamIndicators.map((indicator: any, idx: number) => (
-                          <div key={idx} className="border-l-4 border-red-500 pl-4 py-2">
-                            <div className="flex items-start gap-2">
-                              <AlertTriangle className="h-4 w-4 text-red-600 mt-1" />
-                              <div className="flex-1">
-                                <p className="font-medium text-sm">{indicator.issue}</p>
-                                <p className="text-sm text-muted-foreground mt-1">
-                                  {indicator.explanation}
-                                </p>
-                                <p className="text-sm text-primary mt-2">
-                                  → {indicator.recommendation}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-sm text-muted-foreground text-center py-4">
-                          No major issues found!
-                        </p>
-                      )}
-                    </TabsContent>
 
                     <TabsContent value="recommendations" className="space-y-4 mt-4">
                       {result.analysis.recommendations?.length > 0 ? (
                         result.analysis.recommendations.map((rec: any, idx: number) => (
-                          <div key={idx} className="border-l-4 border-blue-500 pl-4 py-2">
+                          <div key={idx} className="border-l-4 border-primary pl-4 py-2 bg-muted/30 rounded-r">
                             <div className="flex items-start gap-2">
-                              <TrendingUp className="h-4 w-4 text-blue-600 mt-1" />
+                              <TrendingUp className="h-4 w-4 text-primary mt-1" />
                               <div className="flex-1">
                                 <div className="flex items-center justify-between">
                                   <p className="font-medium text-sm">{rec.action}</p>
@@ -233,7 +207,7 @@ export default function EmailCheckerPage() {
                                     {rec.impact} impact
                                   </Badge>
                                 </div>
-                                <p className="text-sm text-muted-foreground mt-1">
+                                <p className="text-sm text-muted-foreground mt-2 whitespace-pre-line">
                                   {rec.details}
                                 </p>
                               </div>
@@ -241,9 +215,11 @@ export default function EmailCheckerPage() {
                           </div>
                         ))
                       ) : (
-                        <p className="text-sm text-muted-foreground text-center py-4">
-                          No recommendations at this time
-                        </p>
+                        <div className="text-center py-8">
+                          <CheckCircle className="h-12 w-12 mx-auto mb-3 text-green-500" />
+                          <p className="text-sm font-medium">Perfect! No issues found</p>
+                          <p className="text-sm text-muted-foreground mt-1">Your email looks great</p>
+                        </div>
                       )}
                     </TabsContent>
 
