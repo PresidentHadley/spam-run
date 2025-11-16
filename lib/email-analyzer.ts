@@ -306,6 +306,49 @@ function fallbackAnalysis(
   const deliverabilityScore = Math.max(0, 100 - spamScore)
   const estimatedInboxRate = Math.max(0, deliverabilityScore - 10)
 
+  // Add positives for well-written emails
+  if (spamWords.length === 0) {
+    positives.push({
+      aspect: 'Clean, professional language',
+      description: 'No spam trigger words detected - great conversational tone!',
+    })
+  }
+  
+  if (subject.length > 0 && subject.length <= 60 && capsCount / subject.length < 0.3) {
+    positives.push({
+      aspect: 'Well-crafted subject line',
+      description: 'Good length and natural capitalization',
+    })
+  }
+  
+  if (technical.linkCount <= 3 && technical.linkCount > 0) {
+    positives.push({
+      aspect: 'Appropriate link usage',
+      description: `${technical.linkCount} link${technical.linkCount > 1 ? 's' : ''} - not excessive`,
+    })
+  }
+  
+  if (exclamationCount <= 1) {
+    positives.push({
+      aspect: 'Professional tone',
+      description: 'Minimal use of exclamation marks and emphasis',
+    })
+  }
+  
+  if (isPersonalEmail && spamWords.length === 0) {
+    positives.push({
+      aspect: 'Personal, authentic voice',
+      description: 'Reads like a genuine one-on-one conversation',
+    })
+  }
+  
+  if (technical.wordCount > 30 && technical.wordCount < 200) {
+    positives.push({
+      aspect: 'Good length',
+      description: 'Concise but substantial - ideal for email',
+    })
+  }
+
   let verdict: 'INBOX_READY' | 'NEEDS_IMPROVEMENT' | 'HIGH_RISK' | 'SPAM_LIKELY'
   if (spamScore < 20) verdict = 'INBOX_READY'
   else if (spamScore < 50) verdict = 'NEEDS_IMPROVEMENT'
