@@ -75,9 +75,10 @@ Provide analysis in this JSON format:
       "priority": <number 1-10>,
       "action": "what to do",
       "impact": "high" | "medium" | "low",
-      "details": "specific guidance with examples"
+      "details": "specific guidance with examples - show before/after if major issues found"
     }
-  ]
+  ],
+  "suggestedRewrite": "If spam score > 50, provide a complete rewritten version that fixes all issues while keeping the core message. Make it conversational, professional, and deliverable. If score < 50, leave this field empty."
 }
 
 Be harsh but fair. Real spam should score 70+.`
@@ -123,6 +124,7 @@ Be harsh but fair. Real spam should score 70+.`
         recommendations: analysis.recommendations || [],
         positives: analysis.positives || [],
         technicalDetails: analyzeTechnical(subject, body),
+        suggestedRewrite: analysis.suggestedRewrite || null,
       },
       processingTimeMs: processingTime,
       timestamp: new Date().toISOString(),

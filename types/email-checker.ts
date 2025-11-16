@@ -37,6 +37,7 @@ export interface EmailAnalysisResults {
   spamIndicators: SpamIndicator[]
   recommendations: Recommendation[]
   positives: Positive[]
+  suggestedRewrite?: string | null
   technicalDetails?: {
     wordCount: number
     linkCount: number

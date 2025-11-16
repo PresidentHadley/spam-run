@@ -195,6 +195,22 @@ export default function EmailCheckerPage() {
                     </TabsList>
 
                     <TabsContent value="recommendations" className="space-y-4 mt-4">
+                      {/* AI Suggested Rewrite */}
+                      {result.analysis.suggestedRewrite && (
+                        <div className="border-2 border-primary rounded-lg p-4 bg-primary/5">
+                          <div className="flex items-start gap-2 mb-3">
+                            <TrendingUp className="h-5 w-5 text-primary mt-0.5" />
+                            <div>
+                              <h4 className="font-semibold text-sm">✨ AI-Suggested Rewrite</h4>
+                              <p className="text-xs text-muted-foreground">A better version that fixes all major issues</p>
+                            </div>
+                          </div>
+                          <div className="bg-background rounded p-4 border">
+                            <pre className="whitespace-pre-wrap text-sm font-mono">{result.analysis.suggestedRewrite}</pre>
+                          </div>
+                        </div>
+                      )}
+                      
                       {result.analysis.recommendations?.length > 0 ? (
                         result.analysis.recommendations.map((rec: any, idx: number) => (
                           <div key={idx} className="border-l-4 border-primary pl-4 py-2 bg-muted/30 rounded-r">
