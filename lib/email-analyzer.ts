@@ -133,6 +133,23 @@ Be thorough and specific. Focus on actionable recommendations.`
   }
 }
 
+function extractContext(text: string, word: string, contextLength: number = 50): string {
+  const lowerText = text.toLowerCase()
+  const lowerWord = word.toLowerCase()
+  const index = lowerText.indexOf(lowerWord)
+  
+  if (index === -1) return word
+  
+  const start = Math.max(0, index - contextLength)
+  const end = Math.min(text.length, index + word.length + contextLength)
+  
+  let context = text.substring(start, end)
+  if (start > 0) context = '...' + context
+  if (end < text.length) context = context + '...'
+  
+  return context
+}
+
 function analyzeTechnical(subject: string, body: string) {
   const words = body.split(/\s+/).length
   const linkMatches = body.match(/https?:\/\/[^\s]+/g)
@@ -287,26 +304,82 @@ function fallbackAnalysis(
   else if (spamScore < 75) verdict = 'HIGH_RISK'
   else verdict = 'SPAM_LIKELY'
 
-  const recommendations = [
-    {
+  // Build dynamic recommendations based on actual issues
+  const recommendations: any[] = []
+  
+  // Only recommend removing spam words if they actually exist
+  if (spamWords.length > 0) {
+    const examples = spamWords.slice(0, 3).map(word => {
+      const context = extractContext(body, word)
+      return `"${context}" → Remove or reword this phrase`
+    }).join('\n')
+    
+    recommendations.push({
       priority: 1,
       action: 'Remove spam trigger words',
       impact: 'high' as const,
-      details: 'Replace promotional language with authentic, conversational tone',
-    },
-    {
+      details: `Found: ${spamWords.join(', ')}.\n\n${examples}`,
+    })
+  }
+  
+  // Only recommend auth elements if missing
+  if (!technical.hasUnsubscribeLink || !technical.hasPhysicalAddress) {
+    const missing: string[] = []
+    if (!technical.hasUnsubscribeLink) missing.push('unsubscribe link')
+    if (!technical.hasPhysicalAddress) missing.push('physical address')
+    
+    recommendations.push({
       priority: 2,
       action: 'Add authentication elements',
       impact: 'high' as const,
-      details: 'Include unsubscribe link and physical address',
-    },
-    {
+      details: `Missing: ${missing.join(' and ')}. Add at the bottom:\n\n"Unsubscribe | Company Name, 123 Main St, City, ST 12345"`,
+    })
+  }
+  
+  // Only recommend subject optimization if there are issues
+  if (subjectLineIssues.length > 0) {
+    const subjectIssueList = subjectLineIssues.map(i => i.issue).join(', ')
+    let betterSubject = subject
+    
+    // Suggest actual improvements
+    if (capsCount / subject.length > 0.5) {
+      betterSubject = subject.toLowerCase().replace(/^\w/, c => c.toUpperCase())
+    }
+    if (subject.length > 60) {
+      betterSubject = betterSubject.substring(0, 57) + '...'
+    }
+    
+    recommendations.push({
       priority: 3,
       action: 'Optimize subject line',
       impact: 'medium' as const,
-      details: 'Keep under 60 characters, avoid excessive caps and punctuation',
-    },
-  ]
+      details: `Current: "${subject}"\nIssues: ${subjectIssueList}\n\nTry: "${betterSubject}"`,
+    })
+  }
+  
+  // Add recommendations for excessive caps/exclamations
+  if (exclamationCount >= 3 || allCapsWords.length > 2) {
+    const examples: string[] = []
+    if (exclamationCount >= 3) examples.push(`Remove ${exclamationCount - 1} exclamation marks`)
+    if (allCapsWords.length > 2) examples.push(`Change "${allCapsWords.slice(0, 2).join(', ')}" to normal case`)
+    
+    recommendations.push({
+      priority: 4,
+      action: 'Reduce emphasis formatting',
+      impact: 'medium' as const,
+      details: examples.join('\n'),
+    })
+  }
+  
+  // Only show if user has good tone but missing technical stuff
+  if (spamWords.length === 0 && technical.hasUnsubscribeLink && positives.length > 0) {
+    recommendations.push({
+      priority: 5,
+      action: 'Your tone is great!',
+      impact: 'low' as const,
+      details: 'Keep the conversational style. Focus on technical requirements only.',
+    })
+  }
 
   return {
     id: `check_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
