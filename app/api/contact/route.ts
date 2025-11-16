@@ -34,7 +34,7 @@ export async function POST(req: Request) {
     const resend = getResendClient()
 
     // Send email via Resend
-    const data = await resend.emails.send({
+    const { data, error } = await resend.emails.send({
       from: 'SpamRun Contact <onboarding@resend.dev>', // You'll need to verify a domain or use Resend's test domain
       to: ['patrick@mgphq.com'],
       replyTo: email,
@@ -67,8 +67,12 @@ export async function POST(req: Request) {
       `,
     })
 
+    if (error) {
+      throw new Error(error.message)
+    }
+
     return NextResponse.json(
-      { success: true, messageId: data.id },
+      { success: true, messageId: data?.id },
       { status: 200 }
     )
   } catch (error: any) {
