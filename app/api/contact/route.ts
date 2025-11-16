@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
     await resend.emails.send({
       from: 'SpamRun <noreply@spamrun.com>',
       to: email,
-      subject: 'We received your message',
+      subject: 'SpamRun.com - We received your message',
       html: `
         <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #1f2937;">Thanks for reaching out!</h2>
