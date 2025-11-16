@@ -10,7 +10,6 @@ export function ContactForm() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    subject: '',
     message: '',
   })
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
@@ -35,7 +34,7 @@ export function ContactForm() {
       }
 
       setStatus('success')
-      setFormData({ name: '', email: '', subject: '', message: '' })
+      setFormData({ name: '', email: '', message: '' })
 
       // Reset success message after 5 seconds
       setTimeout(() => setStatus('idle'), 5000)
@@ -47,21 +46,41 @@ export function ContactForm() {
 
   return (
     <div className="w-full max-w-2xl mx-auto">
-      <div className="text-center mb-8">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 mb-4">
-          <Mail className="w-8 h-8 text-blue-600" />
+      <div className="text-center mb-12">
+        <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 mb-6">
+          <Mail className="w-10 h-10 text-white" />
         </div>
-        <h2 className="text-3xl font-bold text-gray-900 mb-2">Get in Touch</h2>
+        <h1 className="text-4xl font-bold text-gray-900 mb-4">Get in Touch</h1>
         <p className="text-lg text-gray-600">
-          Have questions? We'd love to hear from you.
+          Have questions? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6 bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
+      <form onSubmit={handleSubmit} className="space-y-6 bg-white p-10 rounded-2xl border border-gray-200 shadow-sm">
+        {/* Success Message */}
+        {status === 'success' && (
+          <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-xl text-green-800">
+            <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
+            <p className="text-sm font-medium">
+              Message sent successfully! We'll get back to you soon.
+            </p>
+          </div>
+        )}
+
+        {/* Error Message */}
+        {status === 'error' && (
+          <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-red-800">
+            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+            <p className="text-sm font-medium">
+              {errorMessage || 'Failed to send message. Please try again.'}
+            </p>
+          </div>
+        )}
+
         {/* Name */}
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-            Name *
+            Name
           </label>
           <Input
             id="name"
@@ -70,7 +89,7 @@ export function ContactForm() {
             placeholder="Your name"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            className="w-full"
+            className="w-full h-12 px-4 text-base border-gray-300 rounded-xl focus:border-blue-500 focus:ring-blue-500"
             disabled={status === 'loading'}
           />
         </div>
@@ -78,32 +97,16 @@ export function ContactForm() {
         {/* Email */}
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-            Email *
+            Email
           </label>
           <Input
             id="email"
             type="email"
             required
-            placeholder="you@example.com"
+            placeholder="your@email.com"
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            className="w-full"
-            disabled={status === 'loading'}
-          />
-        </div>
-
-        {/* Subject */}
-        <div>
-          <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
-            Subject
-          </label>
-          <Input
-            id="subject"
-            type="text"
-            placeholder="How can we help?"
-            value={formData.subject}
-            onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-            className="w-full"
+            className="w-full h-12 px-4 text-base border-gray-300 rounded-xl focus:border-blue-500 focus:ring-blue-500"
             disabled={status === 'loading'}
           />
         </div>
@@ -111,43 +114,24 @@ export function ContactForm() {
         {/* Message */}
         <div>
           <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
-            Message *
+            Message
           </label>
           <Textarea
             id="message"
             required
-            placeholder="Tell us what's on your mind..."
+            placeholder="Tell us how we can help..."
             value={formData.message}
             onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-            className="w-full min-h-[150px]"
+            className="w-full min-h-[140px] px-4 py-3 text-base border-gray-300 rounded-xl focus:border-blue-500 focus:ring-blue-500 resize-none"
             disabled={status === 'loading'}
           />
         </div>
-
-        {/* Status Messages */}
-        {status === 'success' && (
-          <div className="flex items-center gap-2 p-4 bg-green-50 border border-green-200 rounded-lg text-green-800">
-            <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
-            <p className="text-sm font-medium">
-              Message sent successfully! We'll get back to you soon.
-            </p>
-          </div>
-        )}
-
-        {status === 'error' && (
-          <div className="flex items-center gap-2 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800">
-            <AlertCircle className="w-5 h-5 flex-shrink-0" />
-            <p className="text-sm font-medium">
-              {errorMessage || 'Failed to send message. Please try again.'}
-            </p>
-          </div>
-        )}
 
         {/* Submit Button */}
         <Button
           type="submit"
           disabled={status === 'loading'}
-          className="w-full h-12 text-lg font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+          className="w-full h-14 text-base font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-xl shadow-md hover:shadow-lg transition-all"
         >
           {status === 'loading' ? (
             <span className="flex items-center gap-2">
@@ -161,12 +145,7 @@ export function ContactForm() {
             </span>
           )}
         </Button>
-
-        <p className="text-xs text-gray-500 text-center">
-          We typically respond within 24 hours
-        </p>
       </form>
     </div>
   )
 }
-
