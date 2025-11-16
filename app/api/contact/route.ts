@@ -1,16 +1,9 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 
-// Initialize Resend client
-function getResendClient() {
-  const apiKey = process.env.RESEND_API_KEY
-  if (!apiKey) {
-    throw new Error('RESEND_API_KEY is not configured')
-  }
-  return new Resend(apiKey)
-}
+const resend = new Resend(process.env.RESEND_API_KEY)
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const { name, email, subject, message } = await req.json()
 
@@ -23,22 +16,19 @@ export async function POST(req: Request) {
     }
 
     // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(email)) {
+    if (!email.includes('@')) {
       return NextResponse.json(
-        { error: 'Invalid email address' },
+        { error: 'Valid email is required' },
         { status: 400 }
       )
     }
 
-    const resend = getResendClient()
-
-    // Send email via Resend
-    const { data, error } = await resend.emails.send({
-      from: 'SpamRun Contact <noreply@mgphq.com>',
-      to: ['patrick@mgphq.com'],
+    // Send contact form submission to you
+    await resend.emails.send({
+      from: 'SpamRun Contact <onboarding@resend.dev>',
+      to: 'patrick@mgphq.com',
       replyTo: email,
-      subject: subject || `Contact Form: Message from ${name}`,
+      subject: subject || `Contact Form: ${name}`,
       html: `
         <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #1f2937; border-bottom: 2px solid #3b82f6; padding-bottom: 10px;">
@@ -48,13 +38,14 @@ export async function POST(req: Request) {
           <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
             <p style="margin: 0 0 10px 0;"><strong>From:</strong> ${name}</p>
             <p style="margin: 0 0 10px 0;"><strong>Email:</strong> ${email}</p>
-            ${subject ? `<p style="margin: 0;"><strong>Subject:</strong> ${subject}</p>` : ''}
+            ${subject ? `<p style="margin: 0 0 10px 0;"><strong>Subject:</strong> ${subject}</p>` : ''}
+            <p style="margin: 0;"><strong>Time:</strong> ${new Date().toLocaleString()}</p>
           </div>
           
           <div style="margin: 20px 0;">
             <h3 style="color: #374151; margin-bottom: 10px;">Message:</h3>
             <div style="background: white; padding: 20px; border-left: 4px solid #3b82f6; white-space: pre-wrap;">
-              ${message}
+              ${message.replace(/\n/g, '<br>')}
             </div>
           </div>
           
@@ -67,20 +58,31 @@ export async function POST(req: Request) {
       `,
     })
 
-    if (error) {
-      throw new Error(error.message)
-    }
+    // Send confirmation email to submitter
+    await resend.emails.send({
+      from: 'SpamRun <onboarding@resend.dev>',
+      to: email,
+      subject: 'We received your message',
+      html: `
+        <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #1f2937;">Thanks for reaching out!</h2>
+          <p>Hi ${name},</p>
+          <p>We've received your message and will get back to you as soon as possible.</p>
+          <p><strong>Your message:</strong></p>
+          <blockquote style="border-left: 3px solid #3b82f6; padding-left: 15px; margin: 20px 0; color: #4b5563;">
+            ${message.replace(/\n/g, '<br>')}
+          </blockquote>
+          <p>Best regards,<br/>SpamRun Team</p>
+        </div>
+      `,
+    })
 
-    return NextResponse.json(
-      { success: true, messageId: data?.id },
-      { status: 200 }
-    )
-  } catch (error: any) {
-    console.error('Error sending contact email:', error)
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Contact error:', error)
     return NextResponse.json(
       { error: 'Failed to send message. Please try again.' },
       { status: 500 }
     )
   }
 }
-
