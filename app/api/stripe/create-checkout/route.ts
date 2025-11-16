@@ -33,7 +33,8 @@ async function createOrGetCustomer(email: string, userId: string) {
 async function createCheckoutSession(
   customerId: string,
   priceId: string,
-  userId: string
+  userId: string,
+  baseUrl: string
 ) {
   const stripe = getStripeClient()
   const session = await stripe.checkout.sessions.create({
@@ -45,8 +46,8 @@ async function createCheckoutSession(
       },
     ],
     mode: 'subscription',
-    success_url: `${process.env.NEXT_PUBLIC_URL}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${process.env.NEXT_PUBLIC_URL}/pricing`,
+    success_url: `${baseUrl}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${baseUrl}/pricing`,
     metadata: {
       userId,
     },
@@ -57,6 +58,15 @@ async function createCheckoutSession(
 
 export async function POST(request: Request) {
   try {
+    // Check required env vars
+    if (!process.env.STRIPE_SECRET_KEY) {
+      console.error('STRIPE_SECRET_KEY is not configured')
+      return NextResponse.json(
+        { error: 'Stripe is not configured' },
+        { status: 500 }
+      )
+    }
+
     const supabase = createClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
@@ -78,13 +88,14 @@ export async function POST(request: Request) {
     }
 
     // Get or create Stripe customer
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('email, stripe_customer_id')
       .eq('id', user.id)
       .single()
 
-    if (!profile) {
+    if (profileError || !profile) {
+      console.error('Profile fetch error:', profileError)
       return NextResponse.json(
         { error: 'Profile not found' },
         { status: 404 }
@@ -104,14 +115,15 @@ export async function POST(request: Request) {
         .eq('id', user.id)
     }
 
-    // Create checkout session
-    const session = await createCheckoutSession(customerId, priceId, user.id)
+    // Create checkout session with dynamic URL
+    const baseUrl = process.env.NEXT_PUBLIC_URL || 'https://spamrun.com'
+    const session = await createCheckoutSession(customerId, priceId, user.id, baseUrl)
 
     return NextResponse.json({ url: session.url })
   } catch (error: any) {
     console.error('Error creating checkout session:', error)
     return NextResponse.json(
-      { error: 'Failed to create checkout session', message: error.message },
+      { error: 'Failed to create checkout session', message: error?.message || 'Unknown error' },
       { status: 500 }
     )
   }

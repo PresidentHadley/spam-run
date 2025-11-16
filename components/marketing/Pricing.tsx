@@ -116,14 +116,18 @@ export function Pricing() {
 
         const data = await response.json()
 
+        if (!response.ok) {
+          throw new Error(data.message || data.error || 'Failed to create checkout session')
+        }
+
         if (data.url) {
           window.location.href = data.url
         } else {
-          throw new Error(data.error || 'Failed to create checkout session')
+          throw new Error('No checkout URL returned')
         }
-      } catch (error) {
-        console.error('Error:', error)
-        alert('Failed to start checkout. Please try again.')
+      } catch (error: any) {
+        console.error('Checkout error:', error)
+        alert(`Failed to start checkout: ${error.message}\n\nPlease try again or contact support.`)
         setCheckoutLoading(null)
       }
     }
