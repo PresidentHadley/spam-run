@@ -1,8 +1,13 @@
+'use client'
+
 import { Check } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { createClient } from '@/lib/supabase/client'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 const plans = [
   {
@@ -17,8 +22,9 @@ const plans = [
       'Community support',
     ],
     cta: 'Get Started Free',
-    href: '/signup',
+    plan: 'free',
     popular: false,
+    priceId: null,
   },
   {
     name: 'Starter',
@@ -33,8 +39,9 @@ const plans = [
       'Perfect for checking every email you send',
     ],
     cta: 'Start Free Trial',
-    href: '/signup?plan=starter',
+    plan: 'starter',
     popular: true,
+    priceId: process.env.NEXT_PUBLIC_STRIPE_STARTER_PRICE_ID,
   },
   {
     name: 'Pro',
@@ -49,8 +56,9 @@ const plans = [
       'Integrate with your tools',
     ],
     cta: 'Start Free Trial',
-    href: '/signup?plan=pro',
+    plan: 'pro',
     popular: false,
+    priceId: process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID,
   },
   {
     name: 'Enterprise',
@@ -65,12 +73,62 @@ const plans = [
       'Dedicated account manager',
     ],
     cta: 'Start Free Trial',
-    href: '/signup?plan=enterprise',
+    plan: 'enterprise',
     popular: false,
+    priceId: process.env.NEXT_PUBLIC_STRIPE_ENTERPRISE_PRICE_ID,
   },
 ]
 
 export function Pricing() {
+  const [user, setUser] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null)
+  const supabase = createClient()
+  const router = useRouter()
+
+  useEffect(() => {
+    async function getUser() {
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
+      setLoading(false)
+    }
+    getUser()
+  }, [])
+
+  async function handlePlanClick(plan: any) {
+    // If free plan or not logged in, go to signup
+    if (plan.plan === 'free' || !user) {
+      router.push(plan.plan === 'free' ? '/signup' : `/signup?plan=${plan.plan}`)
+      return
+    }
+
+    // If logged in and paid plan, create Stripe checkout
+    if (plan.priceId) {
+      setCheckoutLoading(plan.plan)
+      try {
+        const response = await fetch('/api/stripe/create-checkout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ priceId: plan.priceId }),
+        })
+
+        const data = await response.json()
+
+        if (data.url) {
+          window.location.href = data.url
+        } else {
+          throw new Error(data.error || 'Failed to create checkout session')
+        }
+      } catch (error) {
+        console.error('Error:', error)
+        alert('Failed to start checkout. Please try again.')
+        setCheckoutLoading(null)
+      }
+    }
+  }
+
   return (
     <section className="container py-24">
       <div className="mx-auto max-w-4xl text-center">
@@ -97,7 +155,7 @@ export function Pricing() {
               </div>
               <div className="mt-4">
                 <span className="text-4xl font-bold">{plan.price}</span>
-                {plan.price !== 'Custom' && <span className="text-muted-foreground">/month</span>}
+                <span className="text-muted-foreground">/month</span>
               </div>
               <CardDescription className="mt-2">{plan.description}</CardDescription>
             </CardHeader>
@@ -112,11 +170,14 @@ export function Pricing() {
               </ul>
             </CardContent>
             <CardFooter>
-              <Link href={plan.href} className="w-full">
-                <Button className="w-full" variant={plan.popular ? 'default' : 'outline'}>
-                  {plan.cta}
-                </Button>
-              </Link>
+              <Button
+                className="w-full"
+                variant={plan.popular ? 'default' : 'outline'}
+                onClick={() => handlePlanClick(plan)}
+                disabled={loading || checkoutLoading === plan.plan}
+              >
+                {checkoutLoading === plan.plan ? 'Loading...' : plan.cta}
+              </Button>
             </CardFooter>
           </Card>
         ))}
@@ -124,4 +185,3 @@ export function Pricing() {
     </section>
   )
 }
-
