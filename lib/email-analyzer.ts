@@ -86,9 +86,11 @@ Be harsh but fair. Real spam should score 70+.`
   try {
     if (!anthropic) {
       // Fallback if API key not configured
+      console.log('⚠️ ANTHROPIC_API_KEY not configured - using fallback analysis')
       return fallbackAnalysis(subject, body, Date.now() - startTime)
     }
 
+    console.log('✅ Using Claude AI for analysis')
     const message = await anthropic.messages.create({
       model: 'claude-3-5-sonnet-20241022',
       max_tokens: 4096,
@@ -417,6 +419,26 @@ function fallbackAnalysis(
       action: 'Remove spam trigger words',
       impact: 'high' as const,
       details: `Found: ${spamWords.join(', ')}.\n\n${examples}`,
+    })
+  }
+  
+  // Check for repeated URLs and add to recommendations
+  if (repeatedUrls.length > 0) {
+    recommendations.push({
+      priority: 1,
+      action: 'Remove repeated URLs',
+      impact: 'high' as const,
+      details: `You repeated ${repeatedUrls.map(([url, count]) => `"${url}" ${count} times`).join(', ')}.\n\nSpam filters HATE this. Mention your URL once, maybe twice max.\n\nExample: "Check out SpamRun.com" (once) instead of listing it 5 times.`,
+    })
+  }
+  
+  // Check for all-caps words and add specific recommendation
+  if (allCapsWords.length > 2) {
+    recommendations.push({
+      priority: 2,
+      action: 'Fix all-caps words',
+      impact: 'high' as const,
+      details: `Found ${allCapsWords.length} all-caps words: ${allCapsWords.slice(0, 5).join(', ')}\n\nChange to normal case:\n${allCapsWords.slice(0, 3).map(w => `"${w}" → "${w.charAt(0) + w.slice(1).toLowerCase()}"`).join('\n')}`,
     })
   }
   
