@@ -249,6 +249,10 @@ function fallbackAnalysis(
   const technical = analyzeTechnical(subject, body)
 
   // Check technical aspects
+  // Check if this looks like a personal/reply email for context
+  const isPersonalEmail = /hi |hey |hello |thanks|thank you|i hope|regards/i.test(body.substring(0, 200)) 
+    && body.split(/\s+/).length < 150
+
   if (technical.hasUnsubscribeLink) {
     positives.push({
       aspect: 'Unsubscribe link present',
@@ -256,14 +260,18 @@ function fallbackAnalysis(
     })
   } else {
     issues.push({
-      type: 'critical',
+      type: isPersonalEmail ? 'warning' : 'critical',
       category: 'technical',
-      issue: 'No unsubscribe link found',
-      explanation: 'Required by CAN-SPAM Act for marketing emails',
-      recommendation: 'Add a clear unsubscribe link',
-      impact: 'high',
+      issue: isPersonalEmail ? 'No unsubscribe link (required for mass emails)' : 'No unsubscribe link found',
+      explanation: isPersonalEmail 
+        ? 'If sending to multiple recipients, CAN-SPAM Act requires unsubscribe link. Not needed for personal replies.'
+        : 'Required by CAN-SPAM Act for all commercial/marketing emails',
+      recommendation: isPersonalEmail 
+        ? 'For mass emails: Add unsubscribe link. For personal emails: You\'re fine!'
+        : 'Add a clear unsubscribe link at bottom of email',
+      impact: isPersonalEmail ? 'medium' : 'high',
     })
-    spamScore += 25  // Increased from 15 to 25
+    spamScore += isPersonalEmail ? 10 : 25  // Less penalty for personal emails
   }
 
   if (technical.linkCount > 5) {
@@ -328,11 +336,19 @@ function fallbackAnalysis(
     if (!technical.hasUnsubscribeLink) missing.push('unsubscribe link')
     if (!technical.hasPhysicalAddress) missing.push('physical address')
     
+    // Check if this looks like a personal/reply email
+    const isPersonalEmail = /hi |hey |hello |thanks|thank you|i hope|regards/i.test(body.substring(0, 200)) 
+      && body.split(/\s+/).length < 150
+    
+    const legalNote = isPersonalEmail 
+      ? '⚠️ If this is a mass marketing email, you need: '
+      : '⚠️ Required by CAN-SPAM Act for commercial emails: '
+    
     recommendations.push({
       priority: 2,
-      action: 'Add authentication elements',
+      action: isPersonalEmail ? 'For mass emails: Add authentication elements' : 'Add required authentication elements',
       impact: 'high' as const,
-      details: `Missing: ${missing.join(' and ')}. Add at the bottom:\n\n"Unsubscribe | Company Name, 123 Main St, City, ST 12345"`,
+      details: `${legalNote}${missing.join(' and ')}.\n\n${isPersonalEmail ? 'For bulk/marketing emails, add' : 'Add'} at the bottom:\n"Unsubscribe | Company Name, 123 Main St, City, ST 12345"\n\n✅ Not required for personal replies or transactional emails.`,
     })
   }
   
