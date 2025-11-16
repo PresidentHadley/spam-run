@@ -31,28 +31,28 @@ export default function ContactPage() {
         <div className="max-w-2xl mx-auto">
           <div className="grid md:grid-cols-2 gap-6 mt-12">
             <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-              <h3 className="font-semibold text-gray-900 mb-2">📧 Support</h3>
+              <h3 className="font-semibold text-gray-900 mb-2">Support</h3>
               <p className="text-sm text-gray-600">
                 Need help with your account? Our support team is ready to assist.
               </p>
             </div>
 
             <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-              <h3 className="font-semibold text-gray-900 mb-2">💼 Enterprise</h3>
+              <h3 className="font-semibold text-gray-900 mb-2">Enterprise</h3>
               <p className="text-sm text-gray-600">
                 Looking for enterprise solutions? Let's discuss custom plans.
               </p>
             </div>
 
             <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-              <h3 className="font-semibold text-gray-900 mb-2">🤝 Partnerships</h3>
+              <h3 className="font-semibold text-gray-900 mb-2">Partnerships</h3>
               <p className="text-sm text-gray-600">
                 Interested in partnering with SpamRun? We'd love to collaborate.
               </p>
             </div>
 
             <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-              <h3 className="font-semibold text-gray-900 mb-2">💡 Feedback</h3>
+              <h3 className="font-semibold text-gray-900 mb-2">Feedback</h3>
               <p className="text-sm text-gray-600">
                 Have suggestions? Your feedback helps us improve SpamRun.
               </p>
