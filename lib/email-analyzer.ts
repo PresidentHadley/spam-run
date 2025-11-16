@@ -22,14 +22,26 @@ export async function analyzeEmail(
   const startTime = Date.now()
 
   // Prepare the analysis prompt
-  const prompt = `You are an expert email deliverability analyst. Analyze this email for spam triggers and deliverability issues.
+  const prompt = `You are a STRICT email deliverability expert. You catch spam patterns that others miss.
 
 Subject: ${subject}
 
 Body:
 ${body}
 
-Provide a comprehensive analysis in the following JSON format:
+RED FLAGS TO WATCH FOR:
+- All-caps subject lines or excessive punctuation (!!!, @@@)
+- Repeated URLs or text (like "spam.com spam.com spam.com")
+- The word "SPAM" in subject/body (ironic but still a flag!)
+- Excessive exclamation marks
+- Missing unsubscribe links in marketing emails
+- Too many links
+- Overly promotional language
+
+Be AGGRESSIVE in scoring. A subject like "SPAM!@!!" should be 70+ spam score.
+Repeated URLs are a MASSIVE red flag (add 30+ points).
+
+Provide analysis in this JSON format:
 {
   "spamScore": <number 0-100>,
   "deliverabilityScore": <number 0-100>,
@@ -63,22 +75,12 @@ Provide a comprehensive analysis in the following JSON format:
       "priority": <number 1-10>,
       "action": "what to do",
       "impact": "high" | "medium" | "low",
-      "details": "specific guidance"
+      "details": "specific guidance with examples"
     }
   ]
 }
 
-Analysis criteria:
-- Spam words and phrases
-- Subject line quality (length, caps, punctuation, spam triggers)
-- Email body content (promotional language, urgency tactics, deceptive claims)
-- Link structure and quantity
-- Image to text ratio (if applicable)
-- Formatting (excessive caps, colors, fonts)
-- Authentication signals (unsubscribe link, physical address)
-- Overall professionalism and legitimacy
-
-Be thorough and specific. Focus on actionable recommendations.`
+Be harsh but fair. Real spam should score 70+.`
 
   try {
     if (!anthropic) {
@@ -180,6 +182,16 @@ function fallbackAnalysis(
   // Check subject line
   const subjectLineIssues: any[] = []
   
+  // Check if subject contains "spam" (ironic but still a red flag)
+  if (/spam/i.test(subject)) {
+    subjectLineIssues.push({
+      type: 'spam_word',
+      issue: 'Subject contains "SPAM"',
+      recommendation: 'Never use the word "spam" in your subject line',
+    })
+    spamScore += 30
+  }
+  
   if (subject.length > 60) {
     subjectLineIssues.push({
       type: 'length',
@@ -190,13 +202,24 @@ function fallbackAnalysis(
   }
 
   const capsCount = (subject.match(/[A-Z]/g) || []).length
-  if (capsCount / subject.length > 0.5) {
+  if (capsCount / subject.length > 0.5 && subject.length > 3) {
     subjectLineIssues.push({
       type: 'excessive_caps',
       issue: 'Too many capital letters in subject',
-      recommendation: 'Use normal capitalization',
+      recommendation: 'Use normal capitalization - all caps looks like spam',
     })
-    spamScore += 20  // Increased from 10 to 20
+    spamScore += 25
+  }
+  
+  // Check for special character spam (@@@, !!!)
+  const specialChars = subject.match(/[@!#$%]{2,}/g)
+  if (specialChars) {
+    subjectLineIssues.push({
+      type: 'excessive_punctuation',
+      issue: `Excessive special characters: ${specialChars.join(', ')}`,
+      recommendation: 'Remove excessive punctuation marks',
+    })
+    spamScore += 20
   }
   
   // Check for excessive exclamation marks
@@ -247,6 +270,28 @@ function fallbackAnalysis(
   }
 
   const technical = analyzeTechnical(subject, body)
+  
+  // Check for repeated URLs/domains (HUGE spam indicator)
+  const urlPattern = /(?:https?:\/\/)?(?:www\.)?([a-zA-Z0-9-]+\.[a-zA-Z]{2,})/gi
+  const urls = body.match(urlPattern) || []
+  const urlCounts: Record<string, number> = {}
+  urls.forEach(url => {
+    const domain = url.toLowerCase().replace(/^(?:https?:\/\/)?(?:www\.)?/, '')
+    urlCounts[domain] = (urlCounts[domain] || 0) + 1
+  })
+  
+  const repeatedUrls = Object.entries(urlCounts).filter(([_, count]) => count > 3)
+  if (repeatedUrls.length > 0) {
+    issues.push({
+      type: 'critical',
+      category: 'content',
+      issue: `Repeated URLs detected: ${repeatedUrls.map(([url, count]) => `${url} (${count}x)`).join(', ')}`,
+      explanation: 'Repeating the same URL multiple times is a classic spam tactic',
+      recommendation: 'Mention your URL once or twice maximum',
+      impact: 'high',
+    })
+    spamScore += 35  // HUGE penalty
+  }
 
   // Check technical aspects
   // Check if this looks like a personal/reply email for context
