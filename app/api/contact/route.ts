@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
 
     // Send contact form submission to you
     await resend.emails.send({
-      from: 'SpamRun Contact <onboarding@resend.dev>',
+      from: 'SpamRun Contact <noreply@mgphq.com>',
       to: 'patrick@mgphq.com',
       replyTo: email,
       subject: subject || `Contact Form: ${name}`,
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
 
     // Send confirmation email to submitter
     await resend.emails.send({
-      from: 'SpamRun <onboarding@resend.dev>',
+      from: 'SpamRun <noreply@mgphq.com>',
       to: email,
       subject: 'We received your message',
       html: `
