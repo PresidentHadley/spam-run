@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
       from: 'SpamRun Contact <noreply@spamrun.com>',
       to: 'patrick@mgphq.com',
       replyTo: email,
-      subject: subject || `Contact Form: ${name}`,
+      subject: `SpamRun.com Contact: ${name}`,
       html: `
         <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #1f2937; border-bottom: 2px solid #3b82f6; padding-bottom: 10px;">
