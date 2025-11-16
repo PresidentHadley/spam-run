@@ -35,8 +35,8 @@ export async function POST(req: Request) {
 
     // Send email via Resend
     const { data, error } = await resend.emails.send({
-      from: 'SpamRun Contact <onboarding@resend.dev>', // You'll need to verify a domain or use Resend's test domain
-      to: ['patrick@mgphq.com'],
+      from: 'SpamRun Contact <onboarding@resend.dev>',
+      to: ['presidenthadley@gmail.com'], // Using verified email for Resend
       replyTo: email,
       subject: subject || `Contact Form: Message from ${name}`,
       html: `
