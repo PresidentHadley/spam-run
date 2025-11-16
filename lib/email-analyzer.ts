@@ -457,9 +457,9 @@ function fallbackAnalysis(
       : '⚠️ Required by CAN-SPAM Act for commercial emails: '
     
     recommendations.push({
-      priority: 2,
+      priority: isPersonalEmail ? 99 : 3, // Low priority for personal, normal for commercial
       action: isPersonalEmail ? 'For mass emails: Add authentication elements' : 'Add required authentication elements',
-      impact: 'high' as const,
+      impact: isPersonalEmail ? 'medium' : 'high',
       details: `${legalNote}${missing.join(' and ')}.\n\n${isPersonalEmail ? 'For bulk/marketing emails, add' : 'Add'} at the bottom:\n"Unsubscribe | Company Name, 123 Main St, City, ST 12345"\n\n✅ Not required for personal replies or transactional emails.`,
     })
   }
@@ -508,6 +508,9 @@ function fallbackAnalysis(
       details: 'Keep the conversational style. Focus on technical requirements only.',
     })
   }
+  
+  // Sort recommendations by priority
+  recommendations.sort((a, b) => a.priority - b.priority)
 
   return {
     id: `check_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
