@@ -27,6 +27,8 @@ export async function POST(request: Request) {
       // API authentication
       const apiKey = authHeader.replace('Bearer ', '')
       
+      console.log('🔑 API Key received:', apiKey.substring(0, 20) + '...')
+      
       const supabaseService = createClient()
       
       // Get all active keys and compare with bcrypt
@@ -35,7 +37,10 @@ export async function POST(request: Request) {
         .select('*, profiles(*)')
         .eq('is_active', true)
 
+      console.log('📊 Found active keys:', apiKeys?.length || 0)
+      
       if (keyError || !apiKeys || apiKeys.length === 0) {
+        console.error('❌ No active keys found or error:', keyError)
         return NextResponse.json(
           { error: 'Invalid API key' },
           { status: 401 }
@@ -46,18 +51,23 @@ export async function POST(request: Request) {
       const bcrypt = await import('bcryptjs')
       let apiKeyData = null
       for (const key of apiKeys) {
+        console.log('🔍 Comparing with key:', key.key_prefix, 'hash:', key.key_hash.substring(0, 20) + '...')
         if (bcrypt.compareSync(apiKey, key.key_hash)) {
+          console.log('✅ Key matched!')
           apiKeyData = key
           break
         }
       }
 
       if (!apiKeyData) {
+        console.error('❌ No matching key found after bcrypt comparison')
         return NextResponse.json(
           { error: 'Invalid API key' },
           { status: 401 }
         )
       }
+      
+      console.log('✅ Authentication successful for user:', apiKeyData.user_id)
 
       userId = apiKeyData.user_id
       source = 'api'
