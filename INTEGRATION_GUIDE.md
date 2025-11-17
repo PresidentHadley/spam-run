@@ -136,6 +136,39 @@ curl -X POST https://spamrun.com/api/email-checker/analyze \
 - `HIGH_RISK` - Major issues (spam score 60-80)
 - `SPAM_LIKELY` - Will likely be flagged (spam score 80+)
 
+### Understanding the Analysis Object
+
+The `analysis` object contains rich, detailed feedback:
+
+**`spamIndicators`** - Specific issues found with context and examples:
+- `type`: "critical" | "warning" | "info"
+- `category`: "content" | "formatting" | "links" | "subject" | "technical"
+- `issue`: What's wrong (e.g., "Contains 3 spam trigger words: 'free', 'click here', 'act now'")
+- `explanation`: Why it's a problem
+- `recommendation`: How to fix it (with specific examples from your email)
+- `impact`: "high" | "medium" | "low"
+
+**`recommendations`** - Prioritized action items:
+- `priority`: 1-10 (10 = most urgent)
+- `action`: What to do
+- `impact`: Expected improvement level
+- `details`: Specific guidance with before/after examples
+
+**`positives`** - What's working well in your email:
+- `aspect`: What's good (e.g., "Professional tone", "Clean subject line")
+- `description`: Why it helps deliverability
+
+**`suggestedRewrite`** - AI-powered rewrite (only if spam score > 50):
+- Complete rewritten version that fixes all issues
+- Keeps your core message while improving deliverability
+
+**`technicalDetails`** - Raw metrics:
+- `hasAllCaps`: Boolean
+- `excessivePunctuation`: Boolean
+- `spamWordCount`: Number of spam trigger words
+- `linkCount`: Number of links found
+- `hasUnsubscribe`: Boolean
+
 ### Error Responses
 
 **401 Unauthorized** - Invalid or missing API key
@@ -202,9 +235,82 @@ try {
   
   console.log('Spam Score:', result.spamScore);
   console.log('Verdict:', result.verdict);
-  console.log('Recommendations:', result.analysis.recommendations);
+  
+  // Display all recommendations
+  result.analysis.recommendations.forEach(rec => {
+    console.log(`[${rec.impact}] ${rec.action}: ${rec.details}`);
+  });
+  
+  // Display issues with specific examples
+  result.analysis.spamIndicators.forEach(issue => {
+    console.log(`${issue.type}: ${issue.issue}`);
+    console.log(`Fix: ${issue.recommendation}`);
+  });
+  
+  // Show positives
+  result.analysis.positives.forEach(positive => {
+    console.log(`✓ ${positive.aspect}: ${positive.description}`);
+  });
+  
+  // Display AI rewrite if available
+  if (result.analysis.suggestedRewrite) {
+    console.log('Suggested Rewrite:', result.analysis.suggestedRewrite);
+  }
 } catch (error) {
   console.error('Failed to analyze:', error.message);
+}
+```
+
+### Complete UI Display Example
+```javascript
+// How to display the full analysis in your UI
+function displayAnalysis(result) {
+  // Header with scores
+  console.log(`
+═══════════════════════════════════════
+  SPAM ANALYSIS RESULTS
+═══════════════════════════════════════
+Spam Score:        ${result.spamScore}/100
+Deliverability:    ${result.deliverabilityScore}/100
+Inbox Rate:        ${result.estimatedInboxRate}%
+Verdict:           ${result.verdict}
+  `);
+  
+  // Issues & Fixes
+  if (result.analysis.spamIndicators.length > 0) {
+    console.log('\n🚨 ISSUES FOUND:\n');
+    result.analysis.spamIndicators.forEach((issue, i) => {
+      console.log(`${i + 1}. [${issue.impact.toUpperCase()}] ${issue.issue}`);
+      console.log(`   Why: ${issue.explanation}`);
+      console.log(`   Fix: ${issue.recommendation}\n`);
+    });
+  }
+  
+  // Top Recommendations
+  if (result.analysis.recommendations.length > 0) {
+    console.log('\n💡 TOP RECOMMENDATIONS:\n');
+    result.analysis.recommendations
+      .sort((a, b) => b.priority - a.priority)
+      .slice(0, 3)
+      .forEach((rec, i) => {
+        console.log(`${i + 1}. ${rec.action} [${rec.impact}]`);
+        console.log(`   ${rec.details}\n`);
+      });
+  }
+  
+  // Positives
+  if (result.analysis.positives.length > 0) {
+    console.log('\n✅ WHAT\'S WORKING:\n');
+    result.analysis.positives.forEach(positive => {
+      console.log(`• ${positive.aspect}: ${positive.description}`);
+    });
+  }
+  
+  // AI Suggested Rewrite
+  if (result.analysis.suggestedRewrite) {
+    console.log('\n✨ AI-SUGGESTED REWRITE:\n');
+    console.log(result.analysis.suggestedRewrite);
+  }
 }
 ```
 
