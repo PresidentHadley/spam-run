@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { analyzeEmail } from '@/lib/email-analyzer'
 import { checkUsageLimit, incrementUsage } from '@/lib/usage-tracker'
 import { webRateLimiter, apiRateLimiter } from '@/lib/rate-limiter'
@@ -29,7 +29,8 @@ export async function POST(request: Request) {
       
       console.log('🔑 API Key received:', apiKey.substring(0, 20) + '...')
       
-      const supabaseService = createClient()
+      // Use service client to bypass RLS when validating API keys
+      const supabaseService = createServiceClient()
       
       // Get all active keys and compare with bcrypt
       const { data: apiKeys, error: keyError } = await supabaseService
