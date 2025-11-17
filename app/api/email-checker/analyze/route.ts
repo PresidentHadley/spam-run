@@ -3,7 +3,6 @@ import { createClient } from '@/lib/supabase/server'
 import { analyzeEmail } from '@/lib/email-analyzer'
 import { checkUsageLimit, incrementUsage } from '@/lib/usage-tracker'
 import { webRateLimiter, apiRateLimiter } from '@/lib/rate-limiter'
-import { hashApiKey } from '@/lib/api-key-generator'
 
 export async function POST(request: Request) {
   try {
@@ -27,17 +26,33 @@ export async function POST(request: Request) {
     if (isApiRequest && authHeader) {
       // API authentication
       const apiKey = authHeader.replace('Bearer ', '')
-      const keyHash = hashApiKey(apiKey)
       
       const supabaseService = createClient()
-      const { data: apiKeyData, error: keyError } = await supabaseService
+      
+      // Get all active keys and compare with bcrypt
+      const { data: apiKeys, error: keyError } = await supabaseService
         .from('api_keys')
         .select('*, profiles(*)')
-        .eq('key_hash', keyHash)
         .eq('is_active', true)
-        .single()
 
-      if (keyError || !apiKeyData) {
+      if (keyError || !apiKeys || apiKeys.length === 0) {
+        return NextResponse.json(
+          { error: 'Invalid API key' },
+          { status: 401 }
+        )
+      }
+
+      // Find matching key using bcrypt compare
+      const bcrypt = await import('bcryptjs')
+      let apiKeyData = null
+      for (const key of apiKeys) {
+        if (bcrypt.compareSync(apiKey, key.key_hash)) {
+          apiKeyData = key
+          break
+        }
+      }
+
+      if (!apiKeyData) {
         return NextResponse.json(
           { error: 'Invalid API key' },
           { status: 401 }

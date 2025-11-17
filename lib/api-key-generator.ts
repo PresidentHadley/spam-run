@@ -22,14 +22,8 @@ export function generateApiKey(): { key: string; hash: string; prefix: string } 
   }
 }
 
-export function hashApiKey(key: string): string {
-  // For verification, we'll use SHA-256 instead of bcrypt for speed
-  return crypto.createHash('sha256').update(key).digest('hex')
-}
-
 export function verifyApiKey(key: string, hash: string): boolean {
-  // For now, we'll use SHA-256 for comparison
-  const keyHash = hashApiKey(key)
-  return keyHash === hash
+  // Use bcrypt compare for validation
+  return bcrypt.compareSync(key, hash)
 }
 
