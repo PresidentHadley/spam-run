@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { generateApiKey } from '@/lib/api-key-generator'
-import { hashApiKey } from '@/lib/api-key-generator'
 
 export async function POST(request: Request) {
   try {
@@ -33,7 +32,7 @@ export async function POST(request: Request) {
       .from('api_keys')
       .insert({
         user_id: user.id,
-        key_hash: hashApiKey(key),
+        key_hash: hash,
         key_prefix: prefix,
         name,
         is_active: true,
