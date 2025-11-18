@@ -442,29 +442,30 @@ function fallbackAnalysis(
     })
   }
   
-  // Only recommend auth elements if missing
+  // Only recommend auth elements if missing AND looks like bulk email
   if (!technical.hasUnsubscribeLink || !technical.hasPhysicalAddress) {
     const missing: string[] = []
     if (!technical.hasUnsubscribeLink) missing.push('unsubscribe link')
     if (!technical.hasPhysicalAddress) missing.push('physical address')
     
     // Check if this looks like a personal/reply email
-    const isPersonalEmail = /hi |hey |hello |thanks|thank you|i hope|regards/i.test(body.substring(0, 200)) 
+    const isPersonalEmail = /hi |hey |hello |thanks|thank you|i hope|regards|following up|circling back/i.test(body.substring(0, 200)) 
       && body.split(/\s+/).length < 150
+      && !body.toLowerCase().includes('unsubscribe') // If they mention unsubscribe, it's bulk
     
-    const legalNote = isPersonalEmail 
-      ? '⚠️ If this is a mass marketing email, you need: '
-      : '⚠️ Required by CAN-SPAM Act for commercial emails: '
-    
-    const missingItems = missing.join(' and ')
-    recommendations.push({
-      priority: isPersonalEmail ? 99 : 3, // Low priority for personal, normal for commercial
-      action: isPersonalEmail 
-        ? `For mass emails: Add ${missingItems}` 
-        : `Add ${missingItems} (CAN-SPAM required)`,
-      impact: isPersonalEmail ? 'medium' : 'high',
-      details: `${legalNote}${missingItems}.\n\n${isPersonalEmail ? 'For bulk/marketing emails, add' : 'Add'} at the bottom:\n"Unsubscribe | Company Name, 123 Main St, City, ST 12345"\n\n✅ Not required for personal replies or transactional emails.`,
-    })
+    // Skip this recommendation for personal emails - don't scare them!
+    if (isPersonalEmail) {
+      // Don't add any recommendation - personal emails don't need CAN-SPAM compliance
+    } else {
+      // This looks like a bulk/marketing email - CAN-SPAM applies
+      const missingItems = missing.join(' and ')
+      recommendations.push({
+        priority: 7, // High priority for bulk emails
+        action: `Add ${missingItems} (CAN-SPAM required)`,
+        impact: 'high',
+        details: `⚠️ Required by CAN-SPAM Act for commercial emails: ${missingItems}.\n\nAdd at the bottom:\n"Unsubscribe | Company Name, 123 Main St, City, ST 12345"\n\n✅ Not required for personal replies or transactional emails.`,
+      })
+    }
   }
   
   // Only recommend subject optimization if there are issues
