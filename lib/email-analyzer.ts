@@ -73,7 +73,7 @@ Provide analysis in this JSON format:
   "recommendations": [
     {
       "priority": <number 1-10>,
-      "action": "what to do",
+      "action": "SPECIFIC action to take (e.g., 'Add unsubscribe link', not vague terms like 'Add authentication elements')",
       "impact": "high" | "medium" | "low",
       "details": "specific guidance with examples - show before/after if major issues found"
     }
@@ -456,11 +456,14 @@ function fallbackAnalysis(
       ? '⚠️ If this is a mass marketing email, you need: '
       : '⚠️ Required by CAN-SPAM Act for commercial emails: '
     
+    const missingItems = missing.join(' and ')
     recommendations.push({
       priority: isPersonalEmail ? 99 : 3, // Low priority for personal, normal for commercial
-      action: isPersonalEmail ? 'For mass emails: Add authentication elements' : 'Add required authentication elements',
+      action: isPersonalEmail 
+        ? `For mass emails: Add ${missingItems}` 
+        : `Add ${missingItems} (CAN-SPAM required)`,
       impact: isPersonalEmail ? 'medium' : 'high',
-      details: `${legalNote}${missing.join(' and ')}.\n\n${isPersonalEmail ? 'For bulk/marketing emails, add' : 'Add'} at the bottom:\n"Unsubscribe | Company Name, 123 Main St, City, ST 12345"\n\n✅ Not required for personal replies or transactional emails.`,
+      details: `${legalNote}${missingItems}.\n\n${isPersonalEmail ? 'For bulk/marketing emails, add' : 'Add'} at the bottom:\n"Unsubscribe | Company Name, 123 Main St, City, ST 12345"\n\n✅ Not required for personal replies or transactional emails.`,
     })
   }
   
